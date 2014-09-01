@@ -33,7 +33,12 @@ local lcds = {
 }
 
 local reset_meta = function(pos)
-	minetest.get_meta(pos):set_string("formspec", "field[channel;Channel;${channel}]")
+        local formspec = "size[10,8]"
+        formspec = formspec .. "field[0.5,0.5;5,1;channel;Channel;${channel}]"
+        formspec = formspec .. "field[0.5,1.5;5,1;touchchannel;Touch Channel;${touchchannel}]"
+	formspec = formspec .. "textarea[0.2,2.5;10.2,5;options;;${options}]"
+        formspec = formspec .. "button_exit[2.6,7;2.5,1;save;Save]"
+	minetest.get_meta(pos):set_string("formspec", formspec)
 end
 
 local clearscreen = function(pos)
@@ -68,6 +73,51 @@ local on_digiline_receive = function(pos, node, channel, msg)
 		prepare_writing(pos)
 	end
 end
+
+minetest.register_on_player_receive_fields(function(sender, formname, fields)
+
+    local x, y, z = string.match(formname, "digilines_lcd:touched_([-%d]+)_([-%d]+)_([-%d]+)")
+    if not x then return end
+
+    local pos = vector.new(tonumber(x), tonumber(y), tonumber(z))
+
+    local meta = minetest.get_meta(pos)
+    local setchan = meta:get_string("touchchannel")
+    if setchan == "" then return end
+    
+
+    -- We really just want the key of the first (only!) field for our
+    -- message...
+    local touchedtxt = fields.touched
+    if not touchedtxt then return end
+
+    -- Find the message to send...
+    local msg = "?"
+    local opts = meta:get_string("options")
+    for opt in string.gmatch(opts, "[^\r\n]+") do
+        local text, send
+        text, send = string.match(opt, "([^|]+)|([^|]+)")
+        if not text or not send then
+            text = opt
+            send = text
+        end
+        if text == touchedtxt then
+            msg = send
+            break
+        end
+    end
+
+    -- Send the digiline message
+    digiline:receptor_send(pos, digiline.rules.default, setchan, msg)
+
+    -- Put the text on the screen
+    meta:set_string("text", touchedtxt)
+    clearscreen(pos)
+    if touchedtxt ~= "" then
+            prepare_writing(pos)
+    end
+
+end)
 
 local lcd_box = {
 	type = "wallmounted",
@@ -105,8 +155,47 @@ minetest.register_node("digilines_lcd:lcd", {
 	end,
 
 	on_receive_fields = function(pos, formname, fields, sender)
-		minetest.get_meta(pos):set_string("channel", fields.channel)
+		local meta = minetest.get_meta(pos)
+                meta:set_string("channel", fields.channel)
+                meta:set_string("touchchannel", fields.touchchannel)
+                meta:set_string("options", fields.options)
 	end,
+
+	on_punch = function (pos, node, puncher)
+		local meta = minetest.get_meta(pos)
+                local opts = meta:get_string("options")
+                if not opts or opts == "" then
+                    return
+                end
+                local channel = meta:get_string("touchchannel")
+                if not channel or channel == "" then
+                    return
+                end
+
+                local formspec = "size[10,8]"
+                local ypos = 0
+                local xpos = 0
+                for opt in string.gmatch(opts, "[^\r\n]+") do
+                    formspec = formspec .. "button_exit["..xpos..","..ypos..";5,1;"
+                    local text, send
+                    text, send = string.match(opt, "([^|]+)|([^|]+)")
+                    if not text or not send then
+                        text = opt
+                        send  = text
+                    end
+                    formspec = formspec .. "touched;"
+                    formspec = formspec .. minetest.formspec_escape(text) .. "]"
+                    ypos = ypos + 1
+                    if ypos > 7 then
+                        ypos = 0
+                        xpos = 5
+                    end
+                end
+                minetest.show_formspec(puncher:get_player_name(),
+                        "digilines_lcd:touched_"..pos.x.."_"..pos.y.."_"..pos.z,
+                        formspec)
+
+        end,
 
 	digiline = 
 	{
