@@ -155,6 +155,8 @@ minetest.register_node("digilines_lcd:lcd", {
 	end,
 
 	on_receive_fields = function(pos, formname, fields, sender)
+                if not fields.save then return end
+                if minetest.is_protected(pos, sender:get_player_name()) then return end
 		local meta = minetest.get_meta(pos)
                 meta:set_string("channel", fields.channel)
                 meta:set_string("touchchannel", fields.touchchannel)
