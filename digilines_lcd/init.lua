@@ -43,7 +43,7 @@ end
 
 local clearscreen = function(pos)
 	local objects = minetest.get_objects_inside_radius(pos, 0.5)
-	for _, o in ipairs(objects) do
+	for _, o in pairs(objects) do
 		if o:get_entity_name() == "digilines_lcd:text" then
 			o:remove()
 		end
@@ -187,7 +187,7 @@ minetest.register_node("digilines_lcd:lcd", {
                     end
                     formspec = formspec .. "touched;"
                     formspec = formspec .. minetest.formspec_escape(text) .. "]"
-                    ypos = ypos + 1
+                    ypos = ypos + 0.8
                     if ypos > 7 then
                         ypos = 0
                         xpos = 5
