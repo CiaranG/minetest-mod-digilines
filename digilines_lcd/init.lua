@@ -188,7 +188,7 @@ minetest.register_node("digilines_lcd:lcd", {
                     formspec = formspec .. "touched;"
                     formspec = formspec .. minetest.formspec_escape(text) .. "]"
                     ypos = ypos + 0.8
-                    if ypos > 7 then
+                    if ypos > 8 then
                         ypos = 0
                         xpos = 5
                     end
