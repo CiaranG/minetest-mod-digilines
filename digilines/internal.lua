@@ -24,13 +24,11 @@ function digiline:getAnyInputRules(pos)
 	if spec.effector then
 		return digiline:importrules(spec.effector.rules, node)
 	end
-
-	return rules
 end
 
 function digiline:getAnyOutputRules(pos)
 	local node = minetest.get_node(pos)
-	spec = digiline:getspec(node)
+	local spec = digiline:getspec(node)
 	if not spec then return end
 
 	if spec.wire then
