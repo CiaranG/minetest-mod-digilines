@@ -174,7 +174,7 @@ minetest.register_node("digilines_lcd:lcd", {
                     return
                 end
 
-                local formspec = "size[10,8]"
+                local formspec = "size[10,9]"
                 local ypos = 0
                 local xpos = 0
                 for opt in string.gmatch(opts, "[^\r\n]+") do
